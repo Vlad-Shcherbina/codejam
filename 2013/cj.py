@@ -2,8 +2,8 @@ from __future__ import print_function
 import sys
 import re
 import os
+import argparse
 from timeit import default_timer
-from itertools import *
 from pprint import pprint
 from copy import copy
 import multiprocessing
@@ -15,18 +15,18 @@ else:
     from StringIO import StringIO
 
 
-mp = False
-
-
 def main(solve, *source_files):
     global _solve
     # For calling from parallel map (fork-based implementations only).
     _solve = solve
 
     assert source_files
-    if len(sys.argv) != 2:
-        print('specify input file')
-        exit()
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('input', type=str, help="input file")
+    parser.add_argument('--mp', action='store_true', help="use multiprocessing")
+    args = parser.parse_args()
+    print(args)
 
     with zipfile.ZipFile('solution.zip', 'w') as zout:
         for source_file in list(source_files) + [__file__]:
@@ -34,7 +34,7 @@ def main(solve, *source_files):
 
     start_time = default_timer()
 
-    with open(sys.argv[1]) as fin:
+    with open(args.input) as fin:
         lines = fin.readlines()
 
     fin = ListIterator(lines)
@@ -55,13 +55,13 @@ def main(solve, *source_files):
     sys.stderr.write('[' + ' '*len(fins) + ']\n')
     sys.stderr.write('[')
 
-    if mp:
+    if args.mp:
         pool = multiprocessing.Pool()
         results = pool.map(task, fins)
     else:
         results = map(task, fins)
 
-    with open(os.path.splitext(sys.argv[1])[0]+'.out', 'w') as fout:
+    with open(os.path.splitext(args.input)[0]+'.out', 'w') as fout:
         for case_no, answer in enumerate(results):
             print('Case #{}:'.format(case_no + 1), answer, file=fout, end='')
 
