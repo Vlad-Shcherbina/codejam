@@ -15,21 +15,12 @@ def solve(fin, fout, only_read):
 
     empty = r * c - m
 
-    if min(r, c) == 2:
-        if empty == 2 or empty > 1 and empty % 2 != 0:
-            print('Impossible', file=fout)
-            return
-    elif min(r, c) > 2:
-        if empty in [2, 3, 5, 7]:
-            print('Impossible', file=fout)
-            return
-
     random.seed(42)
     for attempt in range(1000):
         solution = {(0, 0)}
         while True:
             if len(solution) == empty:
-                if attempt > 0:
+                if attempt > 20:
                     print(attempt)
                 for i in range(r):
                     for j in range(c):
@@ -56,7 +47,6 @@ def solve(fin, fout, only_read):
                 break
             solution |= neigh
 
-    print('This is very strange and should not happen')
     print('Impossible', file=fout)
 
 
