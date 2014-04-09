@@ -43,9 +43,11 @@ def main(solve, *source_files):
 
     fins = []
 
+    prev_idx = fin.i
     for _ in range(num_cases):
-        fins.append(copy(fin))
         solve(fin, None, only_read=True)
+        fins.append(lines[prev_idx:fin.i])
+        prev_idx = fin.i
     try:
         next(fin)
         assert False, 'not all lines are processed'
@@ -71,11 +73,18 @@ def main(solve, *source_files):
 
 
 def task(fin):
-    fout = StringIO()
-    _solve(fin, fout, only_read=False)
-    sys.stderr.write('.')
-    sys.stderr.flush()
-    return fout.getvalue()
+    try:
+        fout = StringIO()
+        _solve(iter(fin), fout, only_read=False)
+        sys.stderr.write('.')
+        sys.stderr.flush()
+        return fout.getvalue()
+    except Exception as e:
+        if sys.version_info[0] == 3:
+            exec("raise Exception('Failure on input {}'.format(fin)) from e")
+        else:
+            print('Failure on input {}'.format(fin), file=sys.stderr)
+            raise
 
 
 class ListIterator(object):
