@@ -41,7 +41,7 @@ def solve(fin, fout, only_read):
     for _ in range(n - 1):
         best_candidate = None
         best_zip = '99999999'
-        for i, v in enumerate(stack):
+        for i, v in reversed(list(enumerate(stack))):
             for w in adj[v]:
                 if w in visited:
                     continue
