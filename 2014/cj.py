@@ -3,6 +3,7 @@ import sys
 import re
 import os
 import argparse
+import glob
 from timeit import default_timer
 from pprint import pprint
 from copy import copy
@@ -23,53 +24,59 @@ def main(solve, *source_files):
     assert source_files
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('input', type=str, help="input file")
+    parser.add_argument(
+        'input', type=str, nargs='?', default='*.in', help="input file pattern")
     parser.add_argument('--mp', action='store_true', help="use multiprocessing")
     args = parser.parse_args()
     print(args)
+
+    files = glob.glob(args.input)
+    if not files:
+        print('no files match pattern {!r}'.format(args.input))
+        return
 
     with zipfile.ZipFile('solution.zip', 'w') as zout:
         for source_file in list(source_files) + [__file__]:
             zout.write(source_file, os.path.basename(source_file))
 
-    start_time = default_timer()
+    for filename in files:
+        start_time = default_timer()
+        print(filename)
+        with open(filename) as fin:
+            lines = fin.readlines()
 
-    with open(args.input) as fin:
-        lines = fin.readlines()
+        fin = ListIterator(lines)
 
-    fin = ListIterator(lines)
+        num_cases = int(next(fin))
 
-    num_cases = int(next(fin))
+        fins = []
 
-    fins = []
-
-    prev_idx = fin.i
-    for _ in range(num_cases):
-        solve(fin, None, only_read=True)
-        fins.append(lines[prev_idx:fin.i])
         prev_idx = fin.i
-    try:
-        next(fin)
-        assert False, 'not all lines are processed'
-    except StopIteration:
-        pass
+        for _ in range(num_cases):
+            solve(fin, None, only_read=True)
+            fins.append(lines[prev_idx:fin.i])
+            prev_idx = fin.i
+        try:
+            next(fin)
+            assert False, 'not all lines are processed'
+        except StopIteration:
+            pass
 
-    sys.stderr.write('[' + ' '*len(fins) + ']\n')
-    sys.stderr.write('[')
+        sys.stderr.write('[' + ' '*len(fins) + ']\n')
+        sys.stderr.write('[')
 
-    if args.mp:
-        pool = multiprocessing.Pool()
-        results = pool.map(task, fins)
-    else:
-        results = map(task, fins)
+        if args.mp:
+            pool = multiprocessing.Pool()
+            results = pool.map(task, fins)
+        else:
+            results = map(task, fins)
 
-    with open(os.path.splitext(args.input)[0]+'.out', 'w') as fout:
-        for case_no, answer in enumerate(results):
-            print('Case #{}:'.format(case_no + 1), answer, file=fout, end='')
+        with open(os.path.splitext(filename)[0]+'.out', 'w') as fout:
+            for case_no, answer in enumerate(results):
+                print('Case #{}:'.format(case_no + 1), answer, file=fout, end='')
 
-    sys.stderr.write(']\n')
-
-    print('it took {:.3}s'.format(default_timer() - start_time))
+        sys.stderr.write(']\n')
+        print('it took {:.3}s'.format(default_timer() - start_time))
 
 
 def task(fin):
